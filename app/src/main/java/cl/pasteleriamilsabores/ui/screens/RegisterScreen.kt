@@ -36,6 +36,9 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel) {
     var newsletter by remember { mutableStateOf(true) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+    var confirmPasswordError by remember { mutableStateOf(false) }
 
     val esEstudianteDuoc = email.contains("@duoc.cl") || email.contains("@duocuc.cl")
     val usuarioActual by userViewModel.usuarioActual
@@ -125,16 +128,22 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel) {
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = {
-                        email = it
+                    onValueChange = { nuevoValor ->
+                        email = nuevoValor
+                        emailError = nuevoValor.isNotEmpty() && !validarEmail(nuevoValor)
                         userViewModel.limpiarError()
                     },
                     label = { Text("Email *") },
-                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Email") },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     singleLine = true,
-                    isError = userViewModel.errorMessage.value.isNotEmpty()
+                    isError = emailError,
+                    supportingText = {
+                        if (emailError) {
+                            Text("Formato de email inválido", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
 
                 OutlinedTextField(
@@ -158,45 +167,56 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel) {
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = {
-                        password = it
+                    onValueChange = { nuevoValor ->
+                        password = nuevoValor
+                        passwordError = nuevoValor.isNotEmpty() && !validarLongitudPassword(nuevoValor)
                         userViewModel.limpiarError()
                     },
                     label = { Text("Contraseña *") },
-                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Contraseña") },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                if (passwordVisible) Icons.Filled.Done else Icons.Filled.Clear,
+                                if (passwordVisible) Icons.Default.Done else Icons.Default.Clear,
                                 contentDescription = "Visibilidad contraseña"
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true,
-                    isError = userViewModel.errorMessage.value.isNotEmpty()
+                    isError = passwordError,
+                    supportingText = {
+                        if (passwordError) {
+                            Text("Mínimo 6 caracteres", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
 
                 OutlinedTextField(
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
+                    onValueChange = { nuevoValor ->
+                        confirmPassword = nuevoValor
+                        confirmPasswordError = nuevoValor.isNotEmpty() && !validarCoincidenciaPassword(password, nuevoValor)
+                        userViewModel.limpiarError()
+                    },
                     label = { Text("Confirmar contraseña *") },
-                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Confirmar contraseña") },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
-                                if (confirmPasswordVisible) Icons.Filled.Done else Icons.Filled.Clear,
+                                if (confirmPasswordVisible) Icons.Default.Done else Icons.Default.Clear,
                                 contentDescription = "Visibilidad contraseña"
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true,
-                    isError = userViewModel.errorMessage.value.isNotEmpty()
+                    isError = confirmPasswordError,
+                    supportingText = {
+                        if (confirmPasswordError) {
+                            Text("Las contraseñas no coinciden", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
 
                 OutlinedTextField(
@@ -257,25 +277,44 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel) {
             // Botón de registro
             Button(
                 onClick = {
-                    if (password != confirmPassword) {
-                        userViewModel.errorMessage.value = "Las contraseñas no coinciden"
-                        return@Button
+                    // Validar antes de registrar
+                    var hayErrores = false
+
+                    // Validar email
+                    if (!validarEmail(email)) {
+                        emailError = true
+                        hayErrores = true
                     }
 
-                    if (userViewModel.registrarUsuario(
-                            nombre = nombre,
-                            email = email,
-                            password = password,
-                            fechaNacimiento = fechaNacimiento,
-                            telefono = telefono,
-                            esEstudianteDuoc = esEstudianteDuoc,
-                            recibirNewsletter = newsletter
-                        )
-                    ) {
-                        // Registro exitoso - navegar al login
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                    // Validar contraseña
+                    if (!validarLongitudPassword(password)) {
+                        passwordError = true
+                        hayErrores = true
+                    }
+
+                    // Validar coincidencia
+                    if (!validarCoincidenciaPassword(password, confirmPassword)) {
+                        confirmPasswordError = true
+                        hayErrores = true
+                    }
+
+                    if (!hayErrores && terminos) {
+                        if (userViewModel.registrarUsuario(
+                                nombre = nombre,
+                                email = email,
+                                password = password,
+                                fechaNacimiento = fechaNacimiento,
+                                telefono = telefono,
+                                esEstudianteDuoc = esEstudianteDuoc,
+                                recibirNewsletter = newsletter
+                            )
+                        ) {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
                         }
+                    } else if (!terminos) {
+                        userViewModel.errorMessage.value = "Debes aceptar los términos y condiciones"
                     }
                 },
                 modifier = Modifier
@@ -319,4 +358,16 @@ fun RegisterScreen(navController: NavController, userViewModel: UserViewModel) {
             }
         }
     }
+}
+private fun validarEmail(email: String): Boolean {
+    val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$")
+    return emailRegex.matches(email)
+}
+
+private fun validarCoincidenciaPassword(password: String, confirmPassword: String): Boolean {
+    return password == confirmPassword
+}
+
+private fun validarLongitudPassword(password: String): Boolean {
+    return password.length >= 6
 }
