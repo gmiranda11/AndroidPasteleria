@@ -1,9 +1,13 @@
 package cl.pasteleriamilsabores.navigation
 
+import ChangePasswordScreen
+import EditProfileScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import cl.pasteleriamilsabores.ui.screens.*
 import cl.pasteleriamilsabores.viewmodels.CarritoViewModel
 import cl.pasteleriamilsabores.viewmodels.UserViewModel
@@ -19,13 +23,17 @@ fun MainNavGraph(
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            HomeScreen(navController = navController)
+            HomeScreen(navController = navController, carritoViewModel = carritoViewModel)
         }
         composable(Screen.Products.route) {
-            ProductsScreen(navController = navController)
+            ProductsScreen(navController = navController, carritoViewModel = carritoViewModel)
         }
-        composable(Screen.ProductDetail.route) {
-            ProductDetailScreen(navController = navController)
+        composable(Screen.ProductDetail.route,
+            arguments = listOf(
+                navArgument("productId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            ProductDetailScreen(navController = navController, carritoViewModel = carritoViewModel)
         }
         composable(Screen.About.route) {
             AboutScreen(navController = navController)
@@ -58,6 +66,23 @@ fun MainNavGraph(
         }
         composable(Screen.Profile.route) {
             ProfileScreen(navController = navController)
+        }
+        composable(Screen.EditProfile.route) {
+            val usuarioActual = userViewModel.usuarioActual.value
+            if (usuarioActual != null) {
+                EditProfileScreen(
+                    navController = navController,
+                    userViewModel = userViewModel,
+                    usuarioActual = usuarioActual
+                )
+            }
+        }
+
+        composable(Screen.ChangePassword.route) {
+            ChangePasswordScreen(
+                navController = navController,
+                userViewModel = userViewModel
+            )
         }
     }
 }

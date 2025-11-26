@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import cl.pasteleriamilsabores.data.UserRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -14,9 +15,30 @@ class CameraViewModel : ViewModel() {
     val capturedImage = mutableStateOf<Uri?>(null)
     val shouldShowCamera = mutableStateOf(false)
 
+    // Cargar foto al inicializar
+    init {
+        cargarFotoGuardada()
+    }
+
+    private fun cargarFotoGuardada() {
+        val usuarioActual = UserRepository.obtenerUsuarioActual()
+        usuarioActual?.email?.let { email ->
+            val fotoUriString = UserRepository.obtenerFotoPerfil(email)
+            fotoUriString?.let { uriString ->
+                capturedImage.value = Uri.parse(uriString)
+            }
+        }
+    }
+
     fun captureImage(uri: Uri) {
         capturedImage.value = uri
         shouldShowCamera.value = false
+
+        // Guardar la foto en SharedPreferences
+        val usuarioActual = UserRepository.obtenerUsuarioActual()
+        usuarioActual?.email?.let { email ->
+            UserRepository.guardarFotoPerfil(email, uri.toString())
+        }
     }
 
     fun startCamera() {
@@ -29,6 +51,11 @@ class CameraViewModel : ViewModel() {
 
     fun clearImage() {
         capturedImage.value = null
+        // También eliminar de SharedPreferences al limpiar
+        val usuarioActual = UserRepository.obtenerUsuarioActual()
+        usuarioActual?.email?.let { email ->
+            UserRepository.eliminarFotoPerfil(email)
+        }
     }
 
     // Crear archivo para guardar la foto
@@ -55,4 +82,17 @@ class CameraViewModel : ViewModel() {
             null
         }
     }
+
+    fun selectImageFromGallery(uri: Uri) {
+        capturedImage.value = uri
+
+        // Guardar la foto seleccionada
+        val usuarioActual = UserRepository.obtenerUsuarioActual()
+        usuarioActual?.email?.let { email ->
+            UserRepository.guardarFotoPerfil(email, uri.toString())
+        }
+    }
+
+    // Función para abrir selector (cámara o galería)
+    val shouldShowImagePicker = mutableStateOf(false)
 }

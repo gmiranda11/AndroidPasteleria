@@ -1,6 +1,8 @@
 package cl.pasteleriamilsabores.ui.screens
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +41,16 @@ fun ProfileScreen(navController: NavController) {
     val cameraPermissionState = rememberCameraPermissionState()
     var showCamera by remember { mutableStateOf(false) }
     var pendingCameraRequest by remember { mutableStateOf(false) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            cameraViewModel.selectImageFromGallery(it)
+        }
+    }
+
+
 
     // Observar cambios en el estado de permisos
     LaunchedEffect(cameraPermissionState.status) {
@@ -117,27 +129,26 @@ fun ProfileScreen(navController: NavController) {
                 ProfileHeader(
                     usuario = usuarioActual!!,
                     profileImageUri = cameraViewModel.capturedImage.value,
-                    onEditPhoto = {
-                        if (cameraPermissionState.status.isGranted) {
-                            // Si ya tiene permisos, abrir cámara directamente
-                            showCamera = true
-                        } else {
-                            // Si no tiene permisos, solicitarlos y marcar como pendiente
-                            pendingCameraRequest = true
-                            cameraPermissionState.launchPermissionRequest()
-                        }
+                    onEditPhoto = {showImageSourceDialog = true
                     }
                 )
 
                 PersonalInfoSection(usuario = usuarioActual!!)
-                PreferencesSection(usuario = usuarioActual!!)
+                Spacer(modifier = Modifier.height(10.dp))
                 ActionsSection(
-                    onEditProfile = { /* Navegar a editar perfil */ },
-                    onChangePassword = { /* Navegar a cambiar contraseña */ },
+                    onEditProfile = {
+                        navController.navigate(Screen.EditProfile.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onChangePassword = {
+                        navController.navigate(Screen.ChangePassword.route) {
+                            launchSingleTop = true
+                        }
+                    },
                     onLogout = {
-                        userViewModel.cerrarSesion()
-                        // También limpiar la foto temporal al cerrar sesión
                         cameraViewModel.clearImage()
+                        userViewModel.cerrarSesion()
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
@@ -165,6 +176,25 @@ fun ProfileScreen(navController: NavController) {
                 Button(onClick = { pendingCameraRequest = false }) {
                     Text("Entendido")
                 }
+            }
+        )
+    }
+    if (showImageSourceDialog) {
+        ImageSourceDialog(
+            onDismiss = { showImageSourceDialog = false },
+            onCameraSelected = {
+                showImageSourceDialog = false
+                // Verificar permisos antes de abrir cámara
+                if (cameraPermissionState.status.isGranted) {
+                    showCamera = true
+                } else {
+                    pendingCameraRequest = true
+                    cameraPermissionState.launchPermissionRequest()
+                }
+            },
+            onGallerySelected = {
+                showImageSourceDialog = false
+                galleryLauncher.launch("image/*")
             }
         )
     }
@@ -307,7 +337,8 @@ fun PersonalInfoSection(usuario: cl.pasteleriamilsabores.data.Usuario) {
 }
 
 @Composable
-fun PreferencesSection(usuario: cl.pasteleriamilsabores.data.Usuario) {
+fun PreferencesSection(usuario: cl.pasteleriamilsabores.data.Usuario,userViewModel: UserViewModel) {
+    var actualizando by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -332,12 +363,29 @@ fun PreferencesSection(usuario: cl.pasteleriamilsabores.data.Usuario) {
                     text = "Recibir Newsletter",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Switch(
-                    checked = usuario.recibirNewsletter,
-                    onCheckedChange = { /* Podrías agregar lógica para actualizar */ },
-                    enabled = false // Temporalmente deshabilitado
-                )
+                if (actualizando) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                } else {
+                    Switch(
+                        checked = usuario.recibirNewsletter,
+                        onCheckedChange = { nuevoEstado ->
+                            actualizando = true
+                            userViewModel.actualizarPreferenciaNewsletter(nuevoEstado)
+                            actualizando = false
+                        },
+                        enabled = !actualizando
+                    )
+                }
             }
+
+            Text(
+                text = if (usuario.recibirNewsletter) "✅ Recibiendo newsletter"
+                else "❌ Newsletter desactivado",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (usuario.recibirNewsletter) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
@@ -488,4 +536,42 @@ fun ActionButton(
             Icon(Icons.Default.ArrowForward, contentDescription = "Ir")
         }
     }
+}
+@Composable
+fun ImageSourceDialog(
+    onDismiss: () -> Unit,
+    onCameraSelected: () -> Unit,
+    onGallerySelected: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Seleccionar imagen") },
+        text = { Text("¿De dónde quieres tomar la foto de perfil?") },
+        confirmButton = {
+            Column {
+                Button(
+                    onClick = onCameraSelected,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Face, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Usar Cámara")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onGallerySelected,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Menu, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Desde Galería")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

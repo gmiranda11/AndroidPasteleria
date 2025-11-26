@@ -1,7 +1,13 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package cl.pasteleriamilsabores.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,25 +20,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import cl.pasteleriamilsabores.data.Usuario
 import cl.pasteleriamilsabores.navigation.Screen
 import cl.pasteleriamilsabores.ui.components.BottomNavigationBar
+import cl.pasteleriamilsabores.viewmodels.CarritoViewModel
 import cl.pasteleriamilsabores.viewmodels.UserViewModel
+import cl.pasteleriamilsabores.R
+import coil.ImageLoader
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.GifDecoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, carritoViewModel: CarritoViewModel) {
     val userViewModel: UserViewModel = viewModel()
     val usuarioActual by userViewModel.usuarioActual
     var mostrarDialogoPromociones by remember { mutableStateOf(false) }
     var mostrarMenuUsuario by remember { mutableStateOf(false) }
-    var dropdownAnchor by remember { mutableStateOf<Offset?>(null) }
 
     Scaffold(
         topBar = {
@@ -46,7 +61,6 @@ fun HomeScreen(navController: NavController) {
                     )
                 },
                 actions = {
-                    // Mostrar menú de usuario si está logueado
                     if (usuarioActual != null) {
                         Box {
                             IconButton(
@@ -58,13 +72,10 @@ fun HomeScreen(navController: NavController) {
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
-
-                            // El DropdownMenu se posiciona automáticamente respecto al IconButton
                             DropdownMenu(
                                 expanded = mostrarMenuUsuario,
                                 onDismissRequest = { mostrarMenuUsuario = false }
                             ) {
-                                // Información del usuario
                                 DropdownMenuItem(
                                     text = {
                                         Column {
@@ -91,6 +102,7 @@ fun HomeScreen(navController: NavController) {
                                 DropdownMenuItem(
                                     text = { Text("Mis Pedidos") },
                                     onClick = {
+                                        userViewModel.mostrarMensajeInfo("Estamos trabajando en esta funcion.")
                                         mostrarMenuUsuario = false
                                     }
                                 )
@@ -105,7 +117,6 @@ fun HomeScreen(navController: NavController) {
                                     onClick = {
                                         userViewModel.cerrarSesion()
                                         mostrarMenuUsuario = false
-                                        // Mostrar mensaje de confirmación
                                         userViewModel.mostrarMensajeInfo("Sesión cerrada correctamente")
                                     }
                                 )
@@ -139,116 +150,108 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
         ) {
-            // Banner de bienvenida
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
+            ImageLogo()
+            // 1. Header mejorado
+            EnhancedWelcomeHeader(usuarioActual)
+
+            // 2. Banner promocional simple
+            SimplePromoBanner()
+
+            // 3. Categorías
+            //SimpleCategoriesRow(navController)
+
+            // 4. Grid de features mejorado
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // PRIMERA FILA
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = if (usuarioActual != null) "¡Bienvenido de vuelta, ${usuarioActual?.nombre?.split(" ")?.first()}!" else "¡Bienvenido!",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        textAlign = TextAlign.Center
+                    EnhancedFeatureCard(
+                        title = "Productos",
+                        description = "Descubre nuestras delicias",
+                        icon = Icons.Default.ShoppingCart,
+                        onClick = { navController.navigate(Screen.Products.route) },
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Celebrando 50 años de dulzura",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        textAlign = TextAlign.Center
+                    EnhancedFeatureCard(
+                        title = "Blog",
+                        description = "Tips y recetas",
+                        icon = Icons.Default.Face,
+                        onClick = { navController.navigate(Screen.Blog.route) },
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            }
 
+                // SEGUNDA FILA
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedFeatureCard(
+                        title = "Contacto",
+                        description = "Escríbenos",
+                        icon = Icons.Default.Email,
+                        onClick = { navController.navigate(Screen.Contact.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    EnhancedFeatureCard(
+                        title = if (usuarioActual != null) "Mi Perfil" else "Login",
+                        description = if (usuarioActual != null) "Gestiona tu cuenta" else "Ingresa a tu cuenta",
+                        icon = Icons.Default.Person,
+                        onClick = {
+                            if (usuarioActual != null) navController.navigate(Screen.Profile.route)
+                            else navController.navigate(Screen.Login.route)
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
+                // TERCERA FILA - Solo mostrar Registro si NO está logueado
+                if (usuarioActual == null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        EnhancedFeatureCard(
+                            title = "Registro",
+                            description = "Crea tu cuenta",
+                            icon = Icons.Default.Person,
+                            onClick = {
+                                navController.navigate(Screen.Register.route)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        EnhancedFeatureCard(
+                            title = "Promociones",
+                            description = "Ofertas especiales",
+                            icon = Icons.Default.Star,
+                            onClick = { mostrarDialogoPromociones = true },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    // Si está logueado, solo mostrar Promociones en una fila centrada
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Espacio vacío para centrar
+                        Spacer(modifier = Modifier.weight(1f))
 
-            // Grid de opciones - PRIMERA FILA
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                FeatureCard(
-                    title = "Productos",
-                    description = "Descubre nuestras delicias",
-                    onClick = { navController.navigate(Screen.Products.route) },
-                    modifier = Modifier.weight(1f)
-                )
-                FeatureCard(
-                    title = "Blog",
-                    description = "Tips y recetas",
-                    onClick = { navController.navigate(Screen.Blog.route) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+                        EnhancedFeatureCard(
+                            title = "Promos",
+                            description = "Ofertas especiales",
+                            icon = Icons.Default.Star,
+                            onClick = { mostrarDialogoPromociones = true },
+                            modifier = Modifier.weight(2f) // Más ancho para que se vea mejor centrado
+                        )
 
-            // SEGUNDA FILA
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                FeatureCard(
-                    title = "Contacto",
-                    description = "Escríbenos",
-                    onClick = { navController.navigate(Screen.Contact.route) },
-                    modifier = Modifier.weight(1f)
-                )
-                FeatureCard(
-                    title = if (usuarioActual != null) "Mi Cuenta" else "Login",
-                    description = if (usuarioActual != null) "Gestiona tu cuenta" else "Ingresa a tu cuenta",
-                    onClick = {
-                        if (usuarioActual != null) {
-                            navController.navigate(Screen.Profile.route)
-                        } else {
-                            navController.navigate(Screen.Login.route)
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // TERCERA FILA
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                FeatureCard(
-                    title = "Registro",
-                    description = "Crea tu cuenta",
-                    onClick = {
-                        if (usuarioActual == null) {
-                            navController.navigate(Screen.Register.route)
-                        } else {
-                            userViewModel.mostrarMensajeInfo("Ya tienes una sesión activa")
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                FeatureCard(
-                    title = "Promociones",
-                    description = "Ofertas especiales",
-                    onClick = { mostrarDialogoPromociones = true },
-                    modifier = Modifier.weight(1f)
-                )
+                        // Espacio vacío para centrar
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }
@@ -270,11 +273,17 @@ fun HomeScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.ShoppingCart,
-                        contentDescription = "Promociones",
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.secondary
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = R.drawable.buhflipexplode,
+                            imageLoader = ImageLoader.Builder(LocalContext.current)
+                                .components {
+                                    add(GifDecoder.Factory())
+                                }
+                                .build()
+                        ),
+                        contentDescription = "Buh flip exploding",
+                        modifier = Modifier.size(180.dp)
                     )
                     Text(
                         text = "No hay promociones disponibles en este momento",
@@ -301,10 +310,9 @@ fun HomeScreen(navController: NavController) {
         )
     }
 
-    // Snackbar para mensajes informativos
+    // Snackbar para mensajes informativos (mantienes el mismo)
     if (userViewModel.infoMessage.value.isNotEmpty()) {
         LaunchedEffect(userViewModel.infoMessage.value) {
-            // El mensaje se autoelimina después de 3 segundos
             kotlinx.coroutines.delay(3000)
             userViewModel.limpiarMensajeInfo()
         }
@@ -326,49 +334,205 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeatureCard(
+fun CategoryChipWithWeight(
+    name: String,
+    emoji: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
+    }
+}
+@Composable
+fun EnhancedFeatureCard(
     title: String,
     description: String,
+    icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Usamos un height fijo para que todas las tarjetas tengan el mismo tamaño
-    val cardHeight = 120.dp
-
     Card(
-        modifier = modifier
-            .height(cardHeight), // ALTURA FIJA para uniformidad
+        modifier = modifier.height(120.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = MaterialTheme.shapes.medium
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Center, // Centrar verticalmente
-            horizontalAlignment = Alignment.CenterHorizontally // Centrar horizontalmente
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center // Texto centrado
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center, // Texto centrado
-                maxLines = 2 // Máximo 2 líneas para uniformidad
-            )
+            // Icono con fondo
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2
+                )
+            }
         }
+    }
+}
+@Composable
+fun SimplePromoBanner() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Promoción",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Promo Estudiante Duoc UC",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Torta gratis en tu cumpleaños",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+@Composable
+fun EnhancedWelcomeHeader(usuarioActual: Usuario?) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "🍰",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = if (usuarioActual != null) "¡Hola, ${usuarioActual.nombre.split(" ")[0]}!" else "¡Bienvenido!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Bienvenido a Pastelería Mil Sabores",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+@Composable
+fun ImageLogo() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo), // Tu imagen en resources
+            contentDescription = "Logo Pastelería Mil Sabores",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Fit
+        )
     }
 }

@@ -1,5 +1,6 @@
 package cl.pasteleriamilsabores.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,8 +26,7 @@ import cl.pasteleriamilsabores.ui.components.ModalCarrito
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsScreen(navController: NavController) {
-    val carritoViewModel: CarritoViewModel = viewModel()
+fun ProductsScreen(navController: NavController, carritoViewModel: CarritoViewModel) {
     var categoriaSeleccionada by remember { mutableStateOf("Todos") }
     val productos = ProductosRepository.getProductosPorCategoria(categoriaSeleccionada)
 
@@ -127,7 +130,7 @@ fun ProductsScreen(navController: NavController) {
                             onProductClick = {
                                 // Navegar al detalle del producto
                                 // Por ahora lo dejamos así, luego implementaremos la navegación con parámetros
-                                navController.navigate(Screen.ProductDetail.route)
+                                navController.navigate(Screen.ProductDetail.createRoute(producto.id))
                             },
                             onAddToCart = { mensaje ->
                                 carritoViewModel.agregarAlCarrito(producto, mensaje)
@@ -171,20 +174,32 @@ fun ProductoItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Placeholder para imagen
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                        shape = MaterialTheme.shapes.medium
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🍰",
-                    style = MaterialTheme.typography.headlineSmall
+            // Imagen producto
+            if (producto.imagen != 0) {
+                Image(
+                    painter = painterResource(id = producto.imagen),
+                    contentDescription = producto.nombre,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                // Placeholder si no hay imagen
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🍰",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))

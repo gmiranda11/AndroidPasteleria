@@ -29,24 +29,24 @@ fun BottomNavigationBar(
             }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.ShoppingCart, contentDescription = "Productos") },
-            label = { Text("Productos") },
-            selected = currentRoute == Screen.Products.route,
-            onClick = {
-                if (currentRoute != Screen.Products.route) {
-                    navController.navigate(Screen.Products.route) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
-                    }
-                }
-            }
-        )
-        NavigationBarItem(
             icon = { Icon(Icons.Filled.Info, contentDescription = "Nosotros") },
             label = { Text("Nosotros") },
             selected = currentRoute == Screen.About.route,
             onClick = {
                 if (currentRoute != Screen.About.route) {
                     navController.navigate(Screen.About.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
+                }
+            }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.ShoppingCart, contentDescription = "Productos") },
+            label = { Text("Productos") },
+            selected = currentRoute == Screen.Products.route,
+            onClick = {
+                if (currentRoute != Screen.Products.route) {
+                    navController.navigate(Screen.Products.route) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }
                 }

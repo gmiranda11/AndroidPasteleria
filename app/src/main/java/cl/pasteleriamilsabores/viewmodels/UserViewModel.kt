@@ -91,4 +91,87 @@ class UserViewModel : ViewModel() {
     fun limpiarMensajeInfo() {
         infoMessage.value = ""
     }
+
+    fun actualizarPerfil(
+        nombre: String,
+        telefono: String,
+        fechaNacimiento: String,
+        recibirNewsletter: Boolean
+    ): Boolean {
+        val usuarioActualValue = usuarioActual.value ?: return false
+
+        val usuarioActualizado = usuarioActualValue.copy(
+            nombre = nombre,
+            telefono = telefono,
+            fechaNacimiento = fechaNacimiento,
+            recibirNewsletter = recibirNewsletter
+        )
+
+        val exito = UserRepository.actualizarUsuario(usuarioActualizado)
+        if (exito) {
+            usuarioActual.value = usuarioActualizado
+            mostrarMensajeInfo("Perfil actualizado correctamente")
+        } else {
+            errorMessage.value = "Error al actualizar el perfil"
+        }
+
+        return exito
+    }
+
+    // Función para cambiar contraseña
+    fun cambiarPassword(
+        passwordActual: String,
+        nuevaPassword: String,
+        confirmarPassword: String
+    ): Boolean {
+        val usuarioActual = usuarioActual.value ?: return false
+
+        // Validaciones
+        if (usuarioActual.password != passwordActual) {
+            errorMessage.value = "La contraseña actual es incorrecta"
+            return false
+        }
+
+        if (nuevaPassword != confirmarPassword) {
+            errorMessage.value = "Las contraseñas no coinciden"
+            return false
+        }
+
+        if (nuevaPassword.length < 6) {
+            errorMessage.value = "La contraseña debe tener al menos 6 caracteres"
+            return false
+        }
+
+        val exito = UserRepository.cambiarPassword(usuarioActual.email, nuevaPassword)
+        if (exito) {
+            // Actualizar el usuario en el ViewModel
+            this.usuarioActual.value = this.usuarioActual.value?.copy(password = nuevaPassword)
+            mostrarMensajeInfo("Contraseña cambiada correctamente")
+            errorMessage.value = ""
+        } else {
+            errorMessage.value = "Error al cambiar la contraseña"
+        }
+
+        return exito
+    }
+    fun actualizarPreferenciaNewsletter(recibirNewsletter: Boolean): Boolean {
+        val usuarioActualValue = usuarioActual.value ?: return false
+
+        val usuarioActualizado = usuarioActualValue.copy(
+            recibirNewsletter = recibirNewsletter
+        )
+
+        val exito = UserRepository.actualizarUsuario(usuarioActualizado)
+        if (exito) {
+            usuarioActual.value = usuarioActualizado
+            mostrarMensajeInfo(
+                if (recibirNewsletter) "Newsletter activado"
+                else "Newsletter desactivado"
+            )
+        } else {
+            errorMessage.value = "Error al actualizar preferencias"
+        }
+
+        return exito
+    }
 }
