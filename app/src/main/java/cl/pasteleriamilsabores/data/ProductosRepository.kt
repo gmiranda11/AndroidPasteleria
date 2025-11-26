@@ -1,5 +1,7 @@
 package cl.pasteleriamilsabores.data
 
+import cl.pasteleriamilsabores.R
+
 object ProductosRepository {
     val productos = listOf(
         Producto(
@@ -8,6 +10,7 @@ object ProductosRepository {
             precio = 45000,
             categoria = "Tortas Cuadradas",
             descripcion = "Deliciosa torta de chocolate con capas de ganache y un toque de avellanas. Personalizable con mensajes especiales.",
+            imagen = R.drawable.tcchocolate,
             personalizable = true
         ),
         Producto(
@@ -15,49 +18,56 @@ object ProductosRepository {
             nombre = "Torta Cuadrada de Frutas",
             precio = 50000,
             categoria = "Tortas Cuadradas",
-            descripcion = "Una mezcla de frutas frescas y crema chantilly sobre un suave bizcocho de vainilla, ideal para celebraciones."
+            descripcion = "Una mezcla de frutas frescas y crema chantilly sobre un suave bizcocho de vainilla, ideal para celebraciones.",
+            imagen = R.drawable.tccfrutas
         ),
         Producto(
             id = "TT001",
             nombre = "Torta Circular de Vainilla",
             precio = 40000,
             categoria = "Tortas Circulares",
-            descripcion = "Bizcocho de vainilla clásico relleno con crema pastelera y cubierto con un glaseado dulce, perfecto para cualquier ocasión."
+            descripcion = "Bizcocho de vainilla clásico relleno con crema pastelera y cubierto con un glaseado dulce, perfecto para cualquier ocasión.",
+            imagen = R.drawable.tcvainilla
         ),
         Producto(
             id = "TT002",
             nombre = "Torta Circular de Manjar",
             precio = 42000,
             categoria = "Tortas Circulares",
-            descripcion = "Torta tradicional chilena con manjar y nueces, un deleite para los amantes de los sabores dulces y clásicos."
+            descripcion = "Torta tradicional chilena con manjar y nueces, un deleite para los amantes de los sabores dulces y clásicos.",
+            imagen = R.drawable.tcmanjar
         ),
         Producto(
             id = "PI001",
             nombre = "Mousse de Chocolate",
             precio = 5000,
             categoria = "Postres Individuales",
-            descripcion = "Postre individual cremoso y suave, hecho con chocolate de alta calidad, ideal para los amantes del chocolate."
+            descripcion = "Postre individual cremoso y suave, hecho con chocolate de alta calidad, ideal para los amantes del chocolate.",
+            imagen = R.drawable.mchocolate
         ),
         Producto(
             id = "PI002",
             nombre = "Tiramisú Clásico",
             precio = 5500,
             categoria = "Postres Individuales",
-            descripcion = "Un postre italiano individual con capas de café, mascarpone y cacao, perfecto para finalizar cualquier comida."
+            descripcion = "Un postre italiano individual con capas de café, mascarpone y cacao, perfecto para finalizar cualquier comida.",
+            imagen = R.drawable.tiramisu
         ),
         Producto(
             id = "PSA001",
             nombre = "Torta Sin Azúcar de Naranja",
             precio = 48000,
             categoria = "Productos Sin Azúcar",
-            descripcion = "Torta ligera y deliciosa, endulzada naturalmente, ideal para quienes buscan opciones más saludables."
+            descripcion = "Torta ligera y deliciosa, endulzada naturalmente, ideal para quienes buscan opciones más saludables.",
+            imagen = R.drawable.tsanaranja
         ),
         Producto(
             id = "PSA002",
             nombre = "Cheesecake Sin Azúcar",
             precio = 47000,
             categoria = "Productos Sin Azúcar",
-            descripcion = "Suave y cremoso, este cheesecake es una opción perfecta para disfrutar sin culpa."
+            descripcion = "Suave y cremoso, este cheesecake es una opción perfecta para disfrutar sin culpa.",
+            imagen = R.drawable.cheesecake
         )
     )
 

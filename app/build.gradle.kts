@@ -53,6 +53,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-gif:2.4.0")
 
     // CameraX para el recurso nativo (cámara)
     implementation("androidx.camera:camera-core:1.3.0")

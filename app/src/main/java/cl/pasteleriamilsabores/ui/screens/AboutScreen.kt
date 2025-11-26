@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import cl.pasteleriamilsabores.navigation.Screen
 import cl.pasteleriamilsabores.ui.components.BottomNavigationBar
+import cl.pasteleriamilsabores.ui.screens.ImageLogo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,11 +55,11 @@ fun AboutScreen(navController: NavController) {
                 .fillMaxSize()
         ) {
             // Header
+            ImageLogo()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-                    .background(MaterialTheme.colorScheme.secondary),
+                    .height(60.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

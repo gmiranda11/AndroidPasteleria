@@ -1,5 +1,6 @@
 package cl.pasteleriamilsabores.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,11 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import cl.pasteleriamilsabores.navigation.Screen
 import cl.pasteleriamilsabores.ui.components.BottomNavigationBar
+import cl.pasteleriamilsabores.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +33,7 @@ fun BlogScreen(navController: NavController) {
             "Aprende las técnicas básicas para decorar tus tortas como un profesional",
             "María González",
             "15 Nov 2023",
-            "https://proingra.com/wp-content/uploads/2021/11/04-NOV-BRAHMAN-C.png"
+            R.drawable.tecnicas
         ),
         ArticuloBlog(
             "2",
@@ -36,7 +41,7 @@ fun BlogScreen(navController: NavController) {
             "Descubre las recetas más tradicionales de la repostería chilena",
             "Carlos Méndez",
             "22 Nov 2023",
-            "https://www.gourmet.cl/wp-content/uploads/2017/04/CHILENAS.jpg"
+            R.drawable.milhojas
         ),
         ArticuloBlog(
             "3",
@@ -44,7 +49,7 @@ fun BlogScreen(navController: NavController) {
             "Exploramos las opciones de postres sin azúcar y cómo mantener el sabor",
             "Ana Silva",
             "30 Nov 2023",
-            ""
+            R.drawable.postres
         )
     )
 
@@ -115,21 +120,33 @@ fun ArticuloBlogItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Placeholder para imagen del artículo
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .background(
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                        shape = MaterialTheme.shapes.medium
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "📝",
-                    style = MaterialTheme.typography.headlineLarge
+            if (articulo.imagen != 0) {
+                Image(
+                    painter = painterResource(id = articulo.imagen),
+                    contentDescription = articulo.titulo,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                // Fallback si no hay imagen
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "📝",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -192,5 +209,5 @@ data class ArticuloBlog(
     val descripcion: String,
     val autor: String,
     val fecha: String,
-    val imagenUrl: String
+    val imagen: Int
 )

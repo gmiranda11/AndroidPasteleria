@@ -47,3 +47,34 @@ fun CameraPermissionHandler(
         )
     }
 }
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun GalleryPermissionHandler(
+    permissionState: PermissionState,
+    onPermissionGranted: () -> Unit,
+    onPermissionDenied: () -> Unit = {}
+) {
+    LaunchedEffect(permissionState.status) {
+        if (permissionState.status.isGranted) {
+            onPermissionGranted()
+        } else {
+            permissionState.launchPermissionRequest()
+        }
+    }
+
+    if (!permissionState.status.isGranted && !permissionState.status.shouldShowRationale) {
+        AlertDialog(
+            onDismissRequest = onPermissionDenied,
+            title = { Text("Permiso de Galería Requerido") },
+            text = {
+                Text("La aplicación necesita acceso a la galería para seleccionar fotos de perfil.")
+            },
+            confirmButton = {
+                Button(onClick = onPermissionDenied) {
+                    Text("Entendido")
+                }
+            }
+        )
+    }
+}

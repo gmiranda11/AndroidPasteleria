@@ -69,4 +69,59 @@ object UserRepository {
         val usuariosJson = gson.toJson(usuarios)
         sharedPreferences.edit().putString(USERS_KEY, usuariosJson).apply()
     }
+
+    fun guardarFotoPerfil(email: String, fotoUri: String) {
+        sharedPreferences.edit().putString("foto_perfil_$email", fotoUri).apply()
+    }
+
+    fun obtenerFotoPerfil(email: String): String? {
+        return sharedPreferences.getString("foto_perfil_$email", null)
+    }
+
+    fun eliminarFotoPerfil(email: String) {
+        sharedPreferences.edit().remove("foto_perfil_$email").apply()
+    }
+    fun actualizarUsuario(usuarioActualizado: Usuario): Boolean {
+        val usuarios = obtenerUsuarios().toMutableList()
+        val usuarioIndex = usuarios.indexOfFirst { it.id == usuarioActualizado.id }
+
+        if (usuarioIndex == -1) {
+            return false // Usuario no encontrado
+        }
+
+        // Reemplazar el usuario antiguo con el actualizado
+        usuarios[usuarioIndex] = usuarioActualizado
+        guardarUsuarios(usuarios)
+
+        // Si es el usuario actual, actualizarlo también
+        val currentUser = obtenerUsuarioActual()
+        if (currentUser?.id == usuarioActualizado.id) {
+            guardarUsuarioActual(usuarioActualizado)
+        }
+
+        return true
+    }
+
+    // Función para cambiar contraseña
+    fun cambiarPassword(email: String, nuevaPassword: String): Boolean {
+        val usuarios = obtenerUsuarios().toMutableList()
+        val usuarioIndex = usuarios.indexOfFirst { it.email == email }
+
+        if (usuarioIndex == -1) {
+            return false
+        }
+
+        val usuario = usuarios[usuarioIndex]
+        val usuarioActualizado = usuario.copy(password = nuevaPassword)
+        usuarios[usuarioIndex] = usuarioActualizado
+        guardarUsuarios(usuarios)
+
+        // Actualizar usuario actual si es el mismo
+        val currentUser = obtenerUsuarioActual()
+        if (currentUser?.email == email) {
+            guardarUsuarioActual(usuarioActualizado)
+        }
+
+        return true
+    }
 }

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import cl.pasteleriamilsabores.data.ItemCarrito
 import cl.pasteleriamilsabores.data.Producto
 
-class CarritoViewModel : ViewModel() {
+class   CarritoViewModel : ViewModel() {
     val carritoItems = mutableStateOf(emptyList<ItemCarrito>())
     val mostrarCarrito = mutableStateOf(false)
 
