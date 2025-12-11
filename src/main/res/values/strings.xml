@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Pastelería Mil Sabores</string>
+    <string name="welcome">¡Bienvenido a Pastelería Mil Sabores!</string>
+    <string name="celebrating">Celebrando 50 años de tradición y sabor</string>
+    <string name="products">Productos</string>
+    <string name="about_us">Nosotros</string>
+    <string name="blog">Blog</string>
+    <string name="contact">Contacto</string>
+    <string name="login">Iniciar Sesión</string>
+    <string name="register">Registrarse</string>
+</resources>
